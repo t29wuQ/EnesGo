@@ -5,6 +5,7 @@ import (
 	"os"
 	"io/ioutil"
 	"log"
+	"./nes"
 )
 
 func main(){
@@ -14,11 +15,16 @@ func main(){
 		return
 	}
 	defer file.Close()
-	buf, err := ioutil.ReadAll(file)
+	rom, err := ioutil.ReadAll(file)
 	if err != nil{
 		log.Println("Faild : read rom file")
 		return
 	}
-	fmt.Println(buf)
-	fmt.Println("hello world")
+	fmt.Println(rom)
+
+	cpu := new(nes.Cpu)
+	ppu := new(nes.Ppu)
+	cpu.Wram = rom[0x10:0x10+int(rom[4])*0x4000]
+	ppu.Vram = rom[int(0x10+int(rom[4])*0x4000):]
+	
 }

@@ -22,9 +22,8 @@ func main(){
 	}
 	fmt.Println(rom)
 
-	cpu := new(nes.Cpu)
-	ppu := new(nes.Ppu)
-	cpu.Wram = rom[0x10:0x10+int(rom[4])*0x4000]
-	ppu.Vram = rom[int(0x10+int(rom[4])*0x4000):]
+	//cpu := nes.CreateCpu(rom[0x10:0x10+int(rom[4])*0x4000])
+	ppu := nes.CreatePpu(rom[int(0x10+int(rom[4])*0x4000):])
+	ppu.Debug()
 	
 }

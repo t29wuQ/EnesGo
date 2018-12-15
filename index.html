@@ -1,0 +1,88 @@
+<!doctype html>
+<!--
+Copyright 2018 The Go Authors. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+-->
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>EnesGo</title>
+</head>
+
+<body>
+	<!--
+	Add the following polyfill for Microsoft Edge 17/18 support:
+	<script src="https://cdn.jsdelivr.net/npm/text-encoding@0.7.0/lib/encoding.min.js"></script>
+	(see https://caniuse.com/#feat=textencoder)
+	-->
+	<script src="wasm_exec.js"></script>
+	<script>
+		if (!WebAssembly.instantiateStreaming) { // polyfill
+			WebAssembly.instantiateStreaming = async (resp, importObject) => {
+				const source = await (await resp).arrayBuffer();
+				return await WebAssembly.instantiate(source, importObject);
+			};
+		}
+		const go = new Go();
+		//go.argv.push("Hello, argv");
+		let mod, inst;
+		WebAssembly.instantiateStreaming(fetch("test.wasm"), go.importObject).then((result) => {
+			mod = result.module;
+			inst = result.instance;
+			document.getElementById("runButton").disabled = false;
+		}).catch((err) => {
+			console.error(err);
+		});
+
+		async function run() {
+			// console.clear();
+			// go.argv.push("Hello, argv");
+			// await go.run(inst);
+			// inst = await WebAssembly.instantiate(mod, go.importObject); // reset instance
+		}
+
+		function loadRom(event){
+			var files;
+			var reader = new FileReader();
+			if (event.target.files){
+				files = event.target.files;
+			}
+			reader.onload = async function (event){
+				var raw = new Uint8Array(reader.result);
+				console.clear();
+				//go.argv.push(raw.join(","));
+
+				document.getElementById("binary").innerHTML = raw.join(",")
+				await go.run(inst);
+				inst = await WebAssembly.instantiate(mod, go.importObject);
+			};
+			if (files[0]){
+				reader.readAsArrayBuffer(files[0]); 
+			}
+		}
+
+		function Base64ToImage(base64img, callback) {
+			var img = new Image();
+			img.onload = function() {
+				callback(img);
+			};
+			img.src = base64img;
+		}
+		
+		function show(base64img){
+			console.log(base64img);
+			Base64ToImage(base64img, function(img) {
+			// <img>要素としてDOMに追加
+			document.getElementById('main').appendChild(img);
+			});
+		}
+	</script>
+	<p id="binary"></p>
+	<button onClick="run();" id="runButton" disabled>Run</button>
+	<input type="file" id="inputfile" onchange="loadRom(event);" >
+	<img id="screen">
+</body>
+
+</html>

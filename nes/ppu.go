@@ -1,7 +1,6 @@
 package nes
 
 import(
-	"fmt"
 	"strconv"
 )
 
@@ -31,6 +30,8 @@ type Ppu struct{
 	scrollOffsetX uint8
 	scrollOffsetY uint8
 	ppuAddress uint16
+	vBlank bool
+	spriteHit bool
 
 }
 
@@ -55,18 +56,32 @@ func CreatePpu(crom []uint8) *Ppu{
 	return ppu
 }
 
-func (ppu Ppu) Debug(){
+func (ppu Ppu) Debug() []uint8{
+	image := make([]uint8, 192)
+	//image := ""
 	n := 73
+	count := 0
 	for i := 0;i < 8;i++{
 		for j := 0;j < 8;j++{
 			if ppu.sprite[n][i][j] > 0{
-				fmt.Print("■")
+				image[count] = 0xff
+				image[count + 1] = 0xff
+				image[count + 2] = 0xff
+				//image += "255,255,255,"
 			}else{
-				fmt.Print("□")
+				image[count] = 0
+				image[count + 1] = 0
+				image[count + 2] = 0
+				//image += "0,0,0,"
 			}
+			count += 3
 		}
-		fmt.Println("")
 	}
+	return image
+}
+
+func (ppu Ppu) readVram(address uint16) uint8{
+	return ppu.vram[address]
 }
 
 func (ppu Ppu) writePpuRegister(address uint16, value uint8){
@@ -110,4 +125,25 @@ func (ppu Ppu) writePpuRegister(address uint16, value uint8){
 		ppu.ppuAddress += ppu.ppuAddressInc
 	case 0x4014:
 	}
+}
+
+func (ppu Ppu) readPpuRegister(address uint16) uint8{
+	switch address{
+	case 0x2002:
+		var vBlankFlag uint8 = 0
+		if ppu.vBlank{
+			vBlankFlag = 1
+		}
+		var spriteHitFlag uint8 = 0
+		if ppu.spriteHit{
+			spriteHitFlag = 1
+		}
+		ppu.vBlank = false
+		ppu.oamWriteCount = 0
+		ppu.writeCount = 0
+		return vBlankFlag * 0x80 + spriteHitFlag * 0x40
+	case 0x2007:
+		return ppu.readVram(address)
+	}
+	return 0x00
 }

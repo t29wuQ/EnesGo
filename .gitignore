@@ -1,2 +1,4 @@
 #nes rom
 *.nes
+#wasm
+*.wasm
